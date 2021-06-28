@@ -12,7 +12,7 @@ def _create_random_curve(n_channels, seq_len, magnitude, order):
     f = CubicSpline(x, y, axis=-1)
     return f
 
-def noise_from_random_curve(dim: Tuple[int, int], magnitude: float = .1, order: int = 4) -> np.arry:
+def noise_from_random_curve(dim: Tuple[int, int], magnitude: float = .1, order: int = 4) -> np.array:
     '''
     sample points from a gaussian with mean 1 and create a smooth cubic "random curve" from these points
     ts
