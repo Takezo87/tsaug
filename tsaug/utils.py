@@ -12,7 +12,7 @@ def _create_random_curve(n_channels, seq_len, magnitude, order):
     f = CubicSpline(x, y, axis=-1)
     return f
 
-def noise_from_random_curve(dim: Tuple[int, int], magnitude: float = .1, order: int = 4) -> np.array:
+def noise_from_random_curve(dim: Tuple[int, int], magnitude: float = .1, order: int = 4) -> np.ndarray:
     '''
     sample points from a gaussian with mean 1 and create a smooth cubic "random curve" from these points
     ts
@@ -22,13 +22,13 @@ def noise_from_random_curve(dim: Tuple[int, int], magnitude: float = .1, order: 
         magnitude: standard deviation of the noise normal distribution
 
     returns:
-        np.array of dimension dim
+        np.ndarray of dimension dim
     '''
     n_channels, seq_len = dim
     f = _create_random_curve(n_channels, seq_len, magnitude, order)
     return f(np.arange(seq_len))
 
-def noise_from_normal(dim: Tuple[int, int], magnitude: float = .1) -> np.array:
+def noise_from_normal(dim: Tuple[int, int], magnitude: float = .1) -> np.ndarray:
     '''
     sample random noise from a gaussian with mean=1.0 and std=magnitude
     args:
@@ -36,7 +36,7 @@ def noise_from_normal(dim: Tuple[int, int], magnitude: float = .1) -> np.array:
         magnitude: standard deviation of the noise normal distribution
 
     returns:
-        np.array of dimension dim
+        np.ndarray of dimension dim
     '''
     n_channels, seq_len = dim
     return np.random.normal(loc=1.0, scale=magnitude, size=(n_channels, seq_len))

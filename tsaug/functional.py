@@ -6,9 +6,14 @@ from scipy.interpolate import CubicSpline
 
 from utils import noise_from_normal, noise_from_random_curve
 
+####################
+#functional timeseries augmentations:
+#    accepted input is a 2D or 3D numpy array
+####################
+
 ### y noise
 
-def _ynoise(x: np.array, magnitude: float = .1, add: bool =True, smooth: bool =True, **kwargs):
+def _ynoise(x: np.ndarray, magnitude: float = .1, add: bool =True, smooth: bool =True, **kwargs):
     '''
     add random noise to timeseries values
     '''
@@ -30,43 +35,43 @@ def _ynoise(x: np.array, magnitude: float = .1, add: bool =True, smooth: bool =T
         # return output.to(x.device, x.dtype)
 
 
-def ynoise_normal_add(x: np.array, magnitude: float = .1):
+def ynoise_normal_add(x: np.ndarray, magnitude: float = .1):
     """
     add additive noise to timeseries x
     noise taken from normal distribution with mean 0. and stadard deviation magnitude
     args:
-        x: np.array of dimension (n_channels, seq_len)
+        x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: float, standard deviation of noise distribution
 
     returns:
-        transformed np.array of dimension (n_channels, seq_len)
+        transformed np.ndarray of dimension (n_channels, seq_len)
     """
     return _ynoise(x, magnitude=magnitude, add=True, smooth=False)
 
-def ynoise_normal_mul(x: np.array, magnitude: float = .1):
+def ynoise_normal_mul(x: np.ndarray, magnitude: float = .1):
     """
     add multiplicative noise to timeseries x
     noise taken from normal distribution with mean 1. and stadard deviation magnitude
     args:
-        x: np.array of dimension (n_channels, seq_len)
+        x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: float, standard deviation of noise distribution
 
     returns:
-        transformed np.array of dimension (n_channels, seq_len)
+        transformed np.ndarray of dimension (n_channels, seq_len)
     """
     return _ynoise(x, magnitude=magnitude, add=False, smooth=False)
 
-def ynoise_normal_warp(x: np.array, magnitude: float = .1):
+def ynoise_normal_warp(x: np.ndarray, magnitude: float = .1):
     """
     add additive noise to timeseries x
     noise taken from a smooth random curve fitted on random poiunts sampled from
     a normal distribution with mean 0. and standard deviation magnitude
     args:
-        x: np.array of dimension (n_channels, seq_len)
+        x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: float, standard deviation of normal distribution the random points are sampled from
 
     returns:
-        transformed np.array of dimension (n_channels, seq_len)
+        transformed np.ndarray of dimension (n_channels, seq_len)
     """
     return _ynoise(x, magnitude=magnitude, add=True, smooth=True)
 
@@ -92,61 +97,61 @@ def _yscale(x, magnitude=.1, normal=False, by_channel=False):
     # return x*scale.to(x.device) if not by_channel else x*scale[..., None].to(x.device)
 
 
-def yscale_normal(x: np.array, magnitude: float = .1):
+def yscale_normal(x: np.ndarray, magnitude: float = .1):
     """
     "
     scale all values of x by a random scaling factor from [1-a, 1+a], where a is chosen
     from a normal distribtution with mean 0 and standard deviation magnitude
     args:
-        x: np.array of dimension (n_channels, seq_len)
+        x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: float, standard deviation of normal distribution the size of the sample interval of the
         scaling factor is sampled from
 
     returns:
-        transformed np.array of dimension (n_channels, seq_len)
+        transformed np.ndarray of dimension (n_channels, seq_len)
     """
     return _yscale(x, magnitude=magnitude, normal=True, by_channel=False)
 
-def yscale_normal_channel(x: np.array, magnitude: float = .1):
+def yscale_normal_channel(x: np.ndarray, magnitude: float = .1):
     """
     "
     scale all values of x by a random scaling factor from [1-a, 1+a], where a is chosen
     from a normal distribtution with mean 0 and standard deviation magnitude
     scaling factor per channel
     args:
-        x: np.array of dimension (n_channels, seq_len)
+        x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: float, standard deviation of normal distribution the size of the sample interval of the
         scaling factor is sampled from
 
     returns:
-        transformed np.array of dimension (n_channels, seq_len)
+        transformed np.ndarray of dimension (n_channels, seq_len)
     """
     return _yscale(x, magnitude=magnitude, normal=True, by_channel=True)
 
-def yscale_uniform(x: np.array, magnitude: float = .1):
+def yscale_uniform(x: np.ndarray, magnitude: float = .1):
     """
     scale all values of x by a random scaling factor from [1-a, 1+a], where a is chosen
     uniformly from [-.5*magnitude; .5*magnitude]
     args:
-        x: np.array of dimension (n_channels, seq_len)
+        x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: float, size of scaling factor sample interval
 
     returns:
-        transformed np.array of dimension (n_channels, seq_len)
+        transformed np.ndarray of dimension (n_channels, seq_len)
     """
     return _yscale(x, magnitude=magnitude, normal=True, by_channel=False)
 
-def yscale_uniform_channel(x: np.array, magnitude: float = .1):
+def yscale_uniform_channel(x: np.ndarray, magnitude: float = .1):
     """
     scale all values of x by a random scaling factor from [1-a, 1+a], where a is chosen
     uniformly from [-.5*magnitude; .5*magnitude]
     scaling factor per channel
     args:
-        x: np.array of dimension (n_channels, seq_len)
+        x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: float, size of scaling factor sample interval
 
     returns:
-        transformed np.array of dimension (n_channels, seq_len)
+        transformed np.ndarray of dimension (n_channels, seq_len)
     """
     return _yscale(x, magnitude=magnitude, normal=True, by_channel=False)
 
@@ -184,7 +189,7 @@ def _distort_time(dim, magnitude=.1, smooth=False, **kwargs):
     return time_new
 
 # Cell
-def _timenoise(x: np.array, magnitude: float =.1, smooth: bool = False, **kwargs):
+def _timenoise(x: np.ndarray, magnitude: float =.1, smooth: bool = False, **kwargs):
     '''
     helper function to add noise on the time axis, noise taken either from a normal distribution order
     a smoothed random curve
@@ -220,11 +225,11 @@ def timewarp(x, magnitude=.1, order=4):
     distortion noise from a smooth  random curve fitted on random poiunts sampled from
     a normal distribution with mean 0. and standard deviation magnitude
     args:
-        x: np.array of dimension (n_channels, seq_len)
+        x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: float, standard deviation of normal distribution the random points are sampled from
 
     returns:
-        transformed np.array of dimension (n_channels, seq_len)
+        transformed np.ndarray of dimension (n_channels, seq_len)
     '''
     return _timenoise(x, magnitude, smooth=True, order=order)
 
@@ -233,11 +238,11 @@ def timenormal(x, magnitude=.1):
     distort time axis with random noise and interpolate values at original locations
     distortion noise from a normal distribution with mean 0. and standard deviation magnitude
     args:
-        x: np.array of dimension (n_channels, seq_len)
+        x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: float, standard deviation of normal distribution the random points are sampled from
 
     returns:
-        transformed np.array of dimension (n_channels, seq_len)
+        transformed np.ndarray of dimension (n_channels, seq_len)
     '''
     return _timenoise(x, magnitude, smooth=False)
 
@@ -286,41 +291,41 @@ def _zoom(x, magnitude=.2, rand=False, zoomout=False, window=True, verbose=False
     return output
     # return output.to(x.device, x.dtype)
 
-def zoom_in(x: np.array, magnitude:float = .1) -> np.array:
+def zoom_in(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
     '''
     zoom in augmentation
     args:
-        x: np.array of dimension (n_channels, seq_len)
+        x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: number of steps equal to (1-magnitude)*(seq_len)
     '''
     return partial(_zoom, rand=True, zoomout=False, window=True)(x, magnitude=magnitude)
 
 
-def zoom_out(x: np.array, magnitude:float = .1) -> np.array:
+def zoom_out(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
     '''
     zoom_out augementation
     args:
-        x: np.array of dimension (n_channels, seq_len)
+        x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: number of steps equal to (1+magnitude)*(seq_len)
     '''
     return partial(_zoom, rand=True, zoomout=True, window=True)(x, magnitude=magnitude)
 
-def rand_zoom(x: np.array, magnitude:float = .1) -> np.array:
+def rand_zoom(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
     '''
     random zoom augementation
     args:
-        x: np.array of dimension (n_channels, seq_len)
+        x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: number of steps equal to (1+magnitude)*(seq_len)
     '''
     p = np.random.rand()
     zoomout = p<=.5
     return partial(_zoom, rand=True, zoomout=zoomout, window=True)(x, magnitude=magnitude)
 
-def rand_timesteps(x: np.array, magnitude:float = .1) -> np.array:
+def rand_timesteps(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
     '''
     random time steps augementation
     args:
-        x: np.array of dimension (n_channels, seq_len)
+        x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: number of steps equal to (1+magnitude)*(seq_len)
     '''
     p = np.random.rand()
@@ -340,7 +345,7 @@ def _complement_steps(n, steps, verbose=False):
     # pv('complement', verbose)
     # pv(n, verbose)
     # pv(steps, verbose)
-    return np.sort(np.array(list(set(n)-set(steps))))
+    return np.sort(np.ndarray(list(set(n)-set(steps))))
 
 # Cell
 def _center_steps(n, steps):
@@ -395,71 +400,71 @@ def _erase(x, magnitude=.2, rand=False, window=False, mean=False, complement=Fal
         output.add_(mask.int().to(x.dtype).unsqueeze(0)*value)
     return output.squeeze_(0) if not is_batch else output
 
-def timestep_zero(x: np.array, magnitude:float = .1) -> np.array:
+def timestep_zero(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
     '''
     set the values of randomly selected time steps to zero
     args:
-        x: np.array of dimension (n_channels, seq_len)
+        x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: time step erased with probability magnitude
     '''
     return partial(_erase, rand=False, window=False, mean=False, complement=False, center=False, mask=False,
             dim=False)(x, magnitude=magnitude)
 
-def timestep_mean(x: np.array, magnitude:float = .1) -> np.array:
+def timestep_mean(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
     '''
     set the values of randomly selected time steps to the channel mean
     args:
-        x: np.array of dimension (n_channels, seq_len)
+        x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: time step erased with probability magnitude
     '''
     return partial(_erase, rand=False, window=False, mean=True, complement=False, center=False, mask=False,
             dim=False)(x, magnitude=magnitude)
 
-def cutout(x: np.array, magnitude:float = .1) -> np.array:
+def cutout(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
     '''
     cutout augmentation
     args:
-        x: np.array of dimension (n_channels, seq_len)
+        x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: time step erased with probability magnitude
     '''
     return partial(_erase, rand=True, window=True, mean=False, complement=True, center=False, mask=False,
             dim=False)(x, magnitude=magnitude)
     
-def crop(x: np.array, magnitude:float = .1) -> np.array:
+def crop(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
     '''
     cutout augmentation
     args:
-        x: np.array of dimension (n_channels, seq_len)
+        x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: time step erased with probability magnitude
     '''
     return partial(_erase, rand=False, window=True, mean=False, complement=True, center=False, mask=False,
             dim=False)(x, magnitude=magnitude)
 
-def centercrop(x: np.array, magnitude:float = .1) -> np.array:
+def centercrop(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
     '''
     cutout augmentation
     args:
-        x: np.array of dimension (n_channels, seq_len)
+        x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: time step erased with probability magnitude
     '''
     return partial(_erase, rand=False, window=True, mean=False, complement=True, center=True, mask=False,
             dim=False)(x, magnitude=magnitude)
     
-def maskout(x: np.array, magnitude:float = .1) -> np.array:
+def maskout(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
     '''
     maskout augmentation
     args:
-        x: np.array of dimension (n_channels, seq_len)
+        x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: time step erased with probability magnitude
     '''
     return partial(_erase, rand=False, window=False, mean=False, complement=False, center=True, mask=True,
             dim=False)(x, magnitude=magnitude)
 
-def dimout(x: np.array, magnitude:float = .1) -> np.array:
+def dimout(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
     '''
     dimout augmentation
     args:
-        x: np.array of dimension (n_channels, seq_len)
+        x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: time step erased with probability magnitude
     '''
     return partial(_erase, rand=False, window=False, mean=False, complement=False, center=False, mask=False,
