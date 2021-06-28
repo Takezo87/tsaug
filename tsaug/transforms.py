@@ -67,6 +67,14 @@ class YNoiseNormalMul(BaseTransform):
     def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
         return self.f(x)
 
+class YNoiseNormalWarp(BaseTransform):
+    def __init__(self, magnitude=.1, p=1.):
+        super().__init__(p)
+        self.f = partial(F.ynoise_normal_warp, magnitude=magnitude)
+
+    def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
+        return self.f(x)
+
 class TimeWarp(BaseTransform):
     def __init__(self, magnitude=.1, p=1.):
         super().__init__(p)
@@ -82,5 +90,7 @@ class TimeNormal(BaseTransform):
 
     def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
         return self.f(x)
+
+class 
             
 
