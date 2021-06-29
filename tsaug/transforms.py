@@ -1,8 +1,10 @@
-from typing import Optional, List, Tuple, Any, Dict
+from typing import Optional, List, Tuple, Any, Dict, Union
 from functools import partial
 
 import numpy as np
+
 import functional as F
+
 
 class BaseTransform:
     def __init__(self, p: float = 1.0):
@@ -46,7 +48,7 @@ class ToNumpy(BaseTransform):
             try:
                 return np.array(x)
             except:
-                print(f'could not convert x of type {type(x) to np.ndarray}')
+                print(f'could not convert x of type {type(x)} to np.ndarray')
 
 
 
@@ -91,6 +93,19 @@ class TimeNormal(BaseTransform):
     def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
         return self.f(x)
 
-class 
+def all_noise_augs(magnitude=.1):
+    return [YNoiseNormalWarp(magnitude=magnitude), YNoiseNormalAdd(magnitude=magnitude), 
+            YNoiseNormalMul(magnitude=magnitude), TimeWarp(magnitude=magnitude),
+            TimeNormal(magnitude=magnitude)]
+
+ALL_NOISE = all_noise_augs(magnitude=.3)
+
+
+
+
+
+
+            
+
             
 
