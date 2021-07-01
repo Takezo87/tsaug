@@ -76,6 +76,7 @@ class RandAugment(BaseTransform):
 
     def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
         _tfms = np.random.choice(self.tfms, self.N)
+        print('apply tfms')
         for tfm in _tfms: print(tfm.f.func.__name__)
         return Compose(_tfms)(x)
         # return x

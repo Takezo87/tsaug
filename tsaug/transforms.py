@@ -24,7 +24,7 @@ class BaseTransform:
         returns:
             the augmented time series array
         """
-        assert isinstance(x, np.ndarray), "Timeseries passed in must be a np.ndarray"
+        # assert isinstance(x, np.ndarray), "Timeseries passed in must be a np.ndarray"
         assert type(force) == bool, "Expected type bool for variable `force`"
 
 
@@ -100,12 +100,154 @@ def all_noise_augs(magnitude=.1):
 
 ALL_NOISE = all_noise_augs(magnitude=.3)
 
+####################
+# scaling
+####################
 
+class YScaleNormal(BaseTransform):
+    def __init__(self, magnitude=.1, p=1.):
+        super().__init__(p)
+        self.f = partial(F.yscale_normal, magnitude=magnitude)
 
+    def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
+        return self.f(x)
 
+class YScaleNormalChannel(BaseTransform):
+    def __init__(self, magnitude=.1, p=1.):
+        super().__init__(p)
+        self.f = partial(F.yscale_normal_channel, magnitude=magnitude)
 
+    def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
+        return self.f(x)
 
+class YScaleUniform(BaseTransform):
+    def __init__(self, magnitude=.1, p=1.):
+        super().__init__(p)
+        self.f = partial(F.yscale_uniform, magnitude=magnitude)
+
+    def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
+        return self.f(x)
+
+class YScaleUniformChannel(BaseTransform):
+    def __init__(self, magnitude=.1, p=1.):
+        super().__init__(p)
+        self.f = partial(F.yscale_uniform_channel, magnitude=magnitude)
+
+    def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
+        return self.f(x)
+
+def all_scale_augs(magnitude=.1):
+    return [YScaleUniform(magnitude=magnitude), YScaleUniformChannel(magnitude=magnitude), 
+            YScaleNormal(magnitude=magnitude), YScaleNormalChannel(magnitude=magnitude)]
+
+ALL_SCALE = all_scale_augs(magnitude=.3)
+
+####################
+# zooming
+####################
+class ZoomIn(BaseTransform):
+    def __init__(self, magnitude=.1, p=1.):
+        super().__init__(p)
+        self.f = partial(F.zoom_in, magnitude=magnitude)
+
+    def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
+        return self.f(x)
+
+class ZoomOut(BaseTransform):
+    def __init__(self, magnitude=.1, p=1.):
+        super().__init__(p)
+        self.f = partial(F.zoom_out, magnitude=magnitude)
+
+    def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
+        return self.f(x)
+
+class RandZoom(BaseTransform):
+    def __init__(self, magnitude=.1, p=1.):
+        super().__init__(p)
+        self.f = partial(F.rand_zoom, magnitude=magnitude)
+
+    def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
+        return self.f(x)
+    
+class RandTimesteps(BaseTransform):
+    def __init__(self, magnitude=.1, p=1.):
+        super().__init__(p)
+        self.f = partial(F.rand_timesteps, magnitude=magnitude)
+
+    def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
+        return self.f(x)
+
+def all_zoom_augs(magnitude=.1):
+    return [ZoomIn(magnitude=magnitude), ZoomOut(magnitude=magnitude), 
+            RandZoom(magnitude=magnitude), RandTimesteps(magnitude=magnitude)]
+
+ALL_ZOOM = all_zoom_augs(magnitude=.3)
+
+####################
+# erasing
+####################
+class TimestepZero(BaseTransform):
+    def __init__(self, magnitude=.1, p=1.):
+        super().__init__(p)
+        self.f = partial(F.timestep_zero, magnitude=magnitude)
+
+    def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
+        return self.f(x)
+
+class TimestepMean(BaseTransform):
+    def __init__(self, magnitude=.1, p=1.):
+        super().__init__(p)
+        self.f = partial(F.timestep_mean, magnitude=magnitude)
+
+    def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
+        return self.f(x)
+
+class Cutout(BaseTransform):
+    def __init__(self, magnitude=.1, p=1.):
+        super().__init__(p)
+        self.f = partial(F.cutout, magnitude=magnitude)
+
+    def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
+        return self.f(x)
+
+class Crop(BaseTransform):
+    def __init__(self, magnitude=.1, p=1.):
+        super().__init__(p)
+        self.f = partial(F.crop, magnitude=magnitude)
+
+    def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
+        return self.f(x)
+
+class CenterCrop(BaseTransform):
+    def __init__(self, magnitude=.1, p=1.):
+        super().__init__(p)
+        self.f = partial(F.centercrop, magnitude=magnitude)
+
+    def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
+        return self.f(x)
             
+class Maskout(BaseTransform):
+    def __init__(self, magnitude=.1, p=1.):
+        super().__init__(p)
+        self.f = partial(F.maskout, magnitude=magnitude)
+
+    def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
+        return self.f(x)
+
+class Dimout(BaseTransform):
+    def __init__(self, magnitude=.1, p=1.):
+        super().__init__(p)
+        self.f = partial(F.dimout, magnitude=magnitude)
+
+    def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
+        return self.f(x)
+
+def all_erasing_augs(magnitude=.1):
+    return [Maskout(magnitude=magnitude), Cutout(magnitude=magnitude), Crop(magnitude=magnitude), 
+            CenterCrop(magnitude=magnitude), TimestepMean(magnitude=magnitude), Dimout(magnitude=magnitude),
+            TimestepZero(magnitude=magnitude)]
+
+ALL_ERASING = all_erasing_augs(magnitude=.3)
 
             
 
