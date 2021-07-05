@@ -280,7 +280,7 @@ def timenormal(x, magnitude=.1):
 #### zoom
 
 def _randomize(p):
-    print(f'beta p {p}')
+    # print(f'beta p {p}')
     p = np.random.beta(p,p)
     return np.maximum(p, 1-p)
 
@@ -390,8 +390,8 @@ def _create_mask_from_steps(x, steps, dim=False):
     '''create a 2D mask'''
     mask = np.zeros_like(x, dtype=bool)
     if len(steps)==0: return mask
-    print(f'mask shape {mask.shape}')
-    print(f'steps {steps}')
+    # print(f'mask shape {mask.shape}')
+    # print(f'steps {steps}')
 #     print(mask[steps,:])
 #     print(mask[:, steps])
     if dim:
@@ -532,7 +532,7 @@ def integer_noise(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
         magnitude: stdev of the normal distribution the noise is sampled from before rounding to the nearest int
     '''
     noise = integer_noise_from_normal((x.shape[-2], x.shape[-1]), magnitude=magnitude)
-    print(f'interger noise {noise}')
+    # print(f'interger noise {noise}')
     output = x+noise
     return output
 

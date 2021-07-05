@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-from .transforms import BaseTransform, all_noise_augs, all_zoom_augs, all_erasing_augs
+from .transforms import BaseTransform, all_noise_augs, all_zoom_augs, all_erasing_augs, Flip, IntegerNoise
 
 
 
@@ -80,12 +80,16 @@ class RandAugment(BaseTransform):
                 self.tfms = self.tfms+all_zoom_augs(magnitude=magnitude)
             if tfm=='erasing':
                 self.tfms = self.tfms+all_erasing_augs(magnitude=magnitude)
+            if tfm=='flip':
+                self.tfms = self.tfms+[Flip(magnitude=magnitude)]
+            if tfm=='integer_noise':
+                self.tfms = self.tfms+[IntegerNoise(magnitude=magnitude)]
         self.N = N
 
     def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
-        print(f'apply_transform {self.tfms}')
+        # print(f'apply_transform {self.tfms}')
         _tfms = np.random.choice(self.tfms, self.N)
-        print('apply tfms')
-        for tfm in _tfms: print(tfm.f.func.__name__)
+        # print('apply tfms')
+        # for tfm in _tfms: print(tfm.f.func.__name__)
         return Compose(_tfms)(x)
         # return x
