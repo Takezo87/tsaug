@@ -3,7 +3,7 @@ from functools import partial
 
 import numpy as np
 
-import functional as F
+import tsaug.functional as F
 
 
 class BaseTransform:
@@ -29,6 +29,7 @@ class BaseTransform:
 
 
         return self.apply_transform(x, metadata)
+    
 
     def apply_transform(self, x: np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
         """
@@ -50,16 +51,30 @@ class ToNumpy(BaseTransform):
             except:
                 print(f'could not convert x of type {type(x)} to np.ndarray')
 
+class ToLogit(BaseTransform):
+    def __init__(self, format:str = 'decimal'):
+        super().__init__(p=1.)
+        assert format in ['decimal', 'probability']
+        self.format = format
 
-
+    def apply_transform(self, x: Union[np.ndarray, Any],
+        metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
+        return F.to_logit(x, format=self.format)
+        
 
 class YNoiseNormalAdd(BaseTransform):
     def __init__(self, magnitude=.1, p=1.):
+        '''
+        args:
+            magnitude:
+        '''
         super().__init__(p)
         self.f = partial(F.ynoise_normal_add, magnitude=magnitude)
 
     def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
         return self.f(x)
+    def __doc__(self):
+        return self.f.__doc__()
 
 class YNoiseNormalMul(BaseTransform):
     def __init__(self, magnitude=.1, p=1.):
@@ -249,5 +264,19 @@ def all_erasing_augs(magnitude=.1):
 
 ALL_ERASING = all_erasing_augs(magnitude=.3)
 
+class Flip(BaseTransform):
+    def __init__(self, magnitude=.1, p=1.):
+        super().__init__(p)
+        self.f = partial(F.flip, magnitude=magnitude)
+
+    def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
+        return self.f(x)
             
 
+class IntegerNoise(BaseTransform):
+    def __init__(self, magnitude=.1, p=1.):
+        super().__init__(p)
+        self.f = partial(F.integer_noise, magnitude=magnitude)
+
+    def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
+        return self.f(x)

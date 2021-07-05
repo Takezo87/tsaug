@@ -40,3 +40,16 @@ def noise_from_normal(dim: Tuple[int, int], magnitude: float = .1) -> np.ndarray
     '''
     n_channels, seq_len = dim
     return np.random.normal(loc=1.0, scale=magnitude, size=(n_channels, seq_len))
+
+def integer_noise_from_normal(dim: Tuple[int, int], magnitude: float = .1) -> np.ndarray:
+    '''
+    sample random noise from a gaussian with mean=0.0 and stdev=magnitude and round to nearest integer
+    args:
+        dim: dimension of timeseries array (n_channels, sequence lenght) 
+        magnitude: standard deviation of the noise normal distribution
+
+    returns:
+        np.ndarray of dimension dim
+    '''
+    n_channels, seq_len = dim
+    return np.rint(np.random.normal(loc=0.0, scale=magnitude, size=(n_channels, seq_len)))

@@ -13,6 +13,8 @@ data
 experiments
 cols_config.ini
 *.sh
+*.swo
+*.old
 ToDo.txt
 
 # Byte-compiled / optimized / DLL files

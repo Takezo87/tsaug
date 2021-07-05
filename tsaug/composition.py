@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-from transforms import BaseTransform, all_noise_augs
+from .transforms import BaseTransform, all_noise_augs, all_zoom_augs, all_erasing_augs
 
 
 
@@ -69,12 +69,21 @@ class OneOf(BaseComposition):
         return transform(x, metadata, force=True)
 
 class RandAugment(BaseTransform):
-    def __init__(self, magnitude=1., p=1., N=2):
+    def __init__(self, magnitude=.1, p=1., N=2, tfms: List[str]=['noise']):
         super().__init__(p)
-        self.tfms = all_noise_augs(magnitude=magnitude)
+        assert len(tfms)>0, 'need at least one transform family'
+        self.tfms = []
+        for tfm in tfms:
+            if tfm=='noise':
+                self.tfms = self.tfms+all_noise_augs(magnitude=magnitude)
+            if tfm=='zoom':
+                self.tfms = self.tfms+all_zoom_augs(magnitude=magnitude)
+            if tfm=='erasing':
+                self.tfms = self.tfms+all_erasing_augs(magnitude=magnitude)
         self.N = N
 
     def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
+        print(f'apply_transform {self.tfms}')
         _tfms = np.random.choice(self.tfms, self.N)
         print('apply tfms')
         for tfm in _tfms: print(tfm.f.func.__name__)

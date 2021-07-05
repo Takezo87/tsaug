@@ -4,7 +4,7 @@ from functools import partial
 import numpy as np
 from scipy.interpolate import CubicSpline
 
-from utils import noise_from_normal, noise_from_random_curve
+from .utils import noise_from_normal, noise_from_random_curve, integer_noise_from_normal
 
 ####################
 #functional timeseries augmentations:
@@ -47,6 +47,37 @@ def ynoise_normal_add(x: np.ndarray, magnitude: float = .1):
         transformed np.ndarray of dimension (n_channels, seq_len)
     """
     return _ynoise(x, magnitude=magnitude, add=True, smooth=False)
+
+def _logit(x: np.ndarray) -> np.ndarray:
+    assert (0<=x).all() and (x<=1).all(), '_logit expects arrays with values in [0,1]'
+    return np.log(x/(1-x))
+
+def to_logit(x: np.ndarray, format:str='decimal') -> np.ndarray:
+    """
+    transform x into logits
+    args:
+        x: np.ndarray of dimension (n_channels, seq_len)
+        format: either 'decimal' (decimal odds) or 'probability'
+
+    returns:
+        transformed np.ndarray of dimension (n_channels, seq_len)
+    """
+    output = 1./x if format=='decimal' else x
+    return _logit(output)
+
+def odds_noise(x: np.ndarray, magnitude: float = .1) -> np.ndarray:
+    """
+    add additive noise to a probability timeseries x
+    noise taken from normal distribution with mean 0. and stadard deviation magnitude
+    args:
+        x: np.ndarray of dimension (n_channels, seq_len)
+        magnitude: float, standard deviation of noise distribution
+
+    returns:
+        transformed np.ndarray of dimension (n_channels, seq_len)
+    """
+    output = _logit(x)
+    return _ynoise(output, magnitude=magnitude, add=True, smooth=False)
 
 def ynoise_normal_mul(x: np.ndarray, magnitude: float = .1):
     """
@@ -249,6 +280,7 @@ def timenormal(x, magnitude=.1):
 #### zoom
 
 def _randomize(p):
+    print(f'beta p {p}')
     p = np.random.beta(p,p)
     return np.maximum(p, 1-p)
 
@@ -345,7 +377,8 @@ def _complement_steps(n, steps, verbose=False):
     # pv('complement', verbose)
     # pv(n, verbose)
     # pv(steps, verbose)
-    return np.sort(np.ndarray(list(set(n)-set(steps))))
+    if isinstance(n, int): n = np.arange(n)
+    return np.sort(list(set(n)-set(steps)))
 
 # Cell
 def _center_steps(n, steps):
@@ -356,8 +389,9 @@ def _center_steps(n, steps):
 def _create_mask_from_steps(x, steps, dim=False):
     '''create a 2D mask'''
     mask = np.zeros_like(x, dtype=bool)
-#     print(mask.shape)
-#     print(steps)
+    if len(steps)==0: return mask
+    print(f'mask shape {mask.shape}')
+    print(f'steps {steps}')
 #     print(mask[steps,:])
 #     print(mask[:, steps])
     if dim:
@@ -397,7 +431,7 @@ def _erase(x, magnitude=.2, rand=False, window=False, mean=False, complement=Fal
     else:
         assert mask.shape[-2] == value.shape[-2]
         output[..., mask]=0
-        output.add_(mask.int().to(x.dtype).unsqueeze(0)*value)
+        output=output+np.expand_dims(mask.astype('int').astype(x.dtype), 0)*value
     return output.squeeze_(0) if not is_batch else output
 
 def timestep_zero(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
@@ -478,3 +512,27 @@ _randomcrop = partial(_erase, window=True, rand=True, complement=True)
 _centercrop = partial(_erase, window=True, rand=True, center=True,complement=True)
 _maskout = partial(_erase, mask=True)
 _dimout = partial(_erase, dim=True)
+
+def flip(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
+    '''
+    flip augmentation
+    args:
+        x: np.ndarray of dimension (n_channels, seq_len)
+        magnitude: probability of flipping signs for each value
+    '''
+    flip_idxs = np.random.rand(*x.shape)<=magnitude
+    return np.where(flip_idxs==0, -1, flip_idxs)*(-1)*x
+
+
+def integer_noise(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
+    '''
+    randomly add integers
+    args:
+        x: np.ndarray of dimension (n_channels, seq_len)
+        magnitude: stdev of the normal distribution the noise is sampled from before rounding to the nearest int
+    '''
+    noise = integer_noise_from_normal((x.shape[-2], x.shape[-1]), magnitude=magnitude)
+    print(f'interger noise {noise}')
+    output = x+noise
+    return output
+
