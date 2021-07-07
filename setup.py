@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 from pathlib import Path
 
 requirements = [
@@ -8,15 +8,14 @@ requirements = [
 ]
 
 setup(
-    name='tsaug',
+    name='TSAug',
     version='0.1.0',    
     description='A timeseries augmentation library',
     url='https://github.com/Takezo87/tsaug',
     author='Johannes Nowak',
     author_email='nowakj@gmx.de',
     license='BSD 2-clause',
-    packages=['tsaug'],
-    package_dir={'tsaug': 'tsaug'},
+    packages=find_packages(),
     install_requires=requirements,
     python_requires='>=3.6',
 
