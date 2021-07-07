@@ -16,6 +16,7 @@ setup(
     author_email='nowakj@gmx.de',
     license='BSD 2-clause',
     packages=['tsaug'],
+    package_dir={'tsaug': 'tsaug'},
     install_requires=requirements,
     python_requires='>=3.6',
 
