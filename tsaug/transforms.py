@@ -113,6 +113,19 @@ def all_noise_augs(magnitude=.1):
             YNoiseNormalMul(magnitude=magnitude), TimeWarp(magnitude=magnitude),
             TimeNormal(magnitude=magnitude)]
 
+def all_y_noise_augs(magnitude=.1):
+    return [YNoiseNormalWarp(magnitude=magnitude), YNoiseNormalAdd(magnitude=magnitude), 
+            YNoiseNormalMul(magnitude=magnitude)]
+
+def all_time_noise_augs(magnitude=.1):
+    return [TimeWarp(magnitude=magnitude), TimeNormal(magnitude=magnitude)]
+
+def all_augs(magnitude=.1):
+    '''
+    all augs except flip and integer_noise
+    '''
+    return all_noise_augs(magnitude=magnitude) + all_scale_augs(magnitude=magnitude) +all_zoom_augs(magnitude=magnitude) + all_erasing_augs(magnitude=magnitude)
+
 ALL_NOISE = all_noise_augs(magnitude=.3)
 
 ####################

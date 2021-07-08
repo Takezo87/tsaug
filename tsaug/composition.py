@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-from .transforms import BaseTransform, all_noise_augs, all_zoom_augs, all_erasing_augs, Flip, IntegerNoise
+from .transforms import *
 
 
 
@@ -71,11 +71,18 @@ class OneOf(BaseComposition):
 class RandAugment(BaseTransform):
     def __init__(self, magnitude=.1, p=1., N=2, tfms: List[str]=['noise']):
         super().__init__(p)
+        if not isinstance(tfms, list): tfms = [tfms]
         assert len(tfms)>0, 'need at least one transform family'
         self.tfms = []
         for tfm in tfms:
             if tfm=='noise':
                 self.tfms = self.tfms+all_noise_augs(magnitude=magnitude)
+            if tfm=='ynoise':
+                self.tfms = self.tfms+all_y_noise_augs(magnitude=magnitude)
+            if tfm=='time_noise':
+                self.tfms = self.tfms+all_time_noise_augs(magnitude=magnitude)
+            if tfm=='scale':
+                self.tfms = self.tfms+all_scale_augs(magnitude=magnitude)
             if tfm=='zoom':
                 self.tfms = self.tfms+all_zoom_augs(magnitude=magnitude)
             if tfm=='erasing':
@@ -84,6 +91,8 @@ class RandAugment(BaseTransform):
                 self.tfms = self.tfms+[Flip(magnitude=magnitude)]
             if tfm=='integer_noise':
                 self.tfms = self.tfms+[IntegerNoise(magnitude=magnitude)]
+            if tfm=='all':
+                self.tfms = self.tfms+[all_augs(magnitude=magnitude)]
         self.N = N
 
     def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
