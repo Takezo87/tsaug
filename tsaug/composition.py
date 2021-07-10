@@ -92,7 +92,7 @@ class RandAugment(BaseTransform):
             if tfm=='integer_noise':
                 self.tfms = self.tfms+[IntegerNoise(magnitude=magnitude)]
             if tfm=='all':
-                self.tfms = self.tfms+[all_augs(magnitude=magnitude)]
+                self.tfms = self.tfms+all_augs(magnitude=magnitude)
         self.N = N
 
     def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
