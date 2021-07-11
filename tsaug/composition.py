@@ -34,6 +34,7 @@ class Compose(BaseComposition):
         returns: the augmented time series array 
         """
         for transform in self.transforms:
+            print(transform.f.func.__name__)
             x = transform(x, metadata)
         return x
 
