@@ -113,8 +113,7 @@ def all_noise_augs(magnitude=.1):
             TimeWarp(magnitude=magnitude), TimeNormal(magnitude=magnitude)]
 
 def all_y_noise_augs(magnitude=.1):
-    return [YNoiseNormalWarp(magnitude=magnitude), YNoiseNormalAdd(magnitude=magnitude), 
-            YNoiseNormalMul(magnitude=magnitude)]
+    return [YNoiseNormalWarp(magnitude=magnitude), YNoiseNormalAdd(magnitude=magnitude)]
 
 def all_time_noise_augs(magnitude=.1):
     return [TimeWarp(magnitude=magnitude), TimeNormal(magnitude=magnitude)]
