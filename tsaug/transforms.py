@@ -109,6 +109,9 @@ class TimeNormal(BaseTransform):
         return self.f(x)
 
 def all_noise_augs(magnitude=.1):
+    '''
+    additive
+    '''
     return [YNoiseNormalWarp(magnitude=magnitude), YNoiseNormalAdd(magnitude=magnitude), 
             TimeWarp(magnitude=magnitude), TimeNormal(magnitude=magnitude)]
 
@@ -123,6 +126,18 @@ def all_augs(magnitude=.1):
     all augs except flip and integer_noise
     '''
     return all_noise_augs(magnitude=magnitude) + all_scale_augs(magnitude=magnitude) +all_zoom_augs(magnitude=magnitude) + all_erasing_augs(magnitude=magnitude)
+
+def all_augs_v2(magnitude=.1):
+    '''
+    all augs except flip and integer_noise
+    '''
+    return all_noise_augs(magnitude=magnitude) + all_scale_augs_v2(magnitude=magnitude) +all_zoom_augs_v2(magnitude=magnitude) + all_erasing_augs_v2(magnitude=magnitude)
+
+def all_no_warp_augs(magnitude=.1):
+    '''
+    all augs except flip and integer_noise
+    '''
+    return all_y_noise_augs(magnitude=magnitude) + all_scale_augs_v2(magnitude=magnitude) + all_erasing_augs_v2(magnitude=magnitude)
 
 ALL_NOISE = all_noise_augs(magnitude=.3)
 
@@ -166,12 +181,17 @@ def all_scale_augs(magnitude=.1):
     return [YScaleUniform(magnitude=magnitude), YScaleUniformChannel(magnitude=magnitude), 
             YScaleNormal(magnitude=magnitude), YScaleNormalChannel(magnitude=magnitude)]
 
-ALL_SCALE = all_scale_augs(magnitude=.3)
+def all_scale_augs_v2(magnitude=.1):
+    return [YScaleUniform(magnitude=magnitude), YScaleUniformChannel(magnitude=magnitude), 
+            YScaleNormal(magnitude=magnitude), YScaleNormalChannel(magnitude=magnitude)]
+
+ALL_SCALE = all_scale_augs(magnitude=.1)
+ALL_SCALE_2 = all_scale_augs(magnitude=.1)
 
 ####################
 # zooming
 ####################
-class ZoomIn(BaseTransform):
+class Zoom(BaseTransform):
     def __init__(self, magnitude=.1, p=1.):
         super().__init__(p)
         self.f = partial(F.zoom_in, magnitude=magnitude)
@@ -179,10 +199,18 @@ class ZoomIn(BaseTransform):
     def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
         return self.f(x)
 
-class ZoomOut(BaseTransform):
+class ZoomRight(BaseTransform):
     def __init__(self, magnitude=.1, p=1.):
         super().__init__(p)
-        self.f = partial(F.zoom_out, magnitude=magnitude)
+        self.f = partial(F.zoom_right, magnitude=magnitude)
+
+    def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
+        return self.f(x)
+
+class ZoomLeft(BaseTransform):
+    def __init__(self, magnitude=.1, p=1.):
+        super().__init__(p)
+        self.f = partial(F.zoom_left, magnitude=magnitude)
 
     def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
         return self.f(x)
@@ -204,10 +232,14 @@ class RandTimesteps(BaseTransform):
         return self.f(x)
 
 def all_zoom_augs(magnitude=.1):
-    return [ZoomIn(magnitude=magnitude), ZoomOut(magnitude=magnitude), 
+    return [Zoom(magnitude=magnitude), ZoomLeft(magnitude=magnitude), 
             RandZoom(magnitude=magnitude), RandTimesteps(magnitude=magnitude)]
 
+def all_zoom_augs_v2(magnitude=.1):
+    return [Zoom(magnitude=magnitude), ZoomLeft(magnitude=magnitude), RandTimesteps(magnitude=magnitude)]
+
 ALL_ZOOM = all_zoom_augs(magnitude=.3)
+ALL_ZOOM_2 = all_zoom_augs_v2(magnitude=.3)
 
 ####################
 # erasing
@@ -244,6 +276,14 @@ class Crop(BaseTransform):
     def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
         return self.f(x)
 
+class LeftCrop(BaseTransform):
+    def __init__(self, magnitude=.1, p=1.):
+        super().__init__(p)
+        self.f = partial(F.left_crop, magnitude=magnitude)
+
+    def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:
+        return self.f(x)
+    
 class CenterCrop(BaseTransform):
     def __init__(self, magnitude=.1, p=1.):
         super().__init__(p)
@@ -273,7 +313,12 @@ def all_erasing_augs(magnitude=.1):
             CenterCrop(magnitude=magnitude), TimestepMean(magnitude=magnitude), Dimout(magnitude=magnitude),
             TimestepZero(magnitude=magnitude)]
 
-ALL_ERASING = all_erasing_augs(magnitude=.3)
+def all_erasing_augs_v2(magnitude=.1):
+    return [Cutout(magnitude=magnitude), Crop(magnitude=magnitude), 
+            LeftCrop(magnitude=magnitude), TimestepZero(magnitude=magnitude)]
+    
+ALL_ERASING = all_erasing_augs(magnitude=.1)
+ALL_ERASING_2 = all_erasing_augs_v2(magnitude=.1)
 
 class Flip(BaseTransform):
     def __init__(self, magnitude=.1, p=1.):

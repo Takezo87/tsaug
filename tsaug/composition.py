@@ -94,6 +94,16 @@ class RandAugment(BaseTransform):
                 self.tfms = self.tfms+[IntegerNoise(magnitude=magnitude)]
             if tfm=='all':
                 self.tfms = self.tfms+all_augs(magnitude=magnitude)
+            if tfm=='erasing_2':
+                self.tfms = self.tfms+all_erasing_augs_v2(magnitude=magnitude)
+            if tfm=='zoom_2':
+                self.tfms = self.tfms+all_zoom_augs_v2(magnitude=magnitude)
+            if tfm=='scale_2':
+                self.tfms = self.tfms+all_scale_augs_v2(magnitude=magnitude)
+            if tfm=='all_2':
+                self.tfms = self.tfms+all_augs_v2(magnitude=magnitude)
+            if tfm=='no_warp':
+                self.tfms = self.tfms+all_no_warp_augs(magnitude=magnitude)
         self.N = N
 
     def apply_transform(self, x:np.ndarray, metadata: Optional[List[Dict[str, Any]]] = None) -> np.ndarray:

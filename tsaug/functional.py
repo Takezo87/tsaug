@@ -118,12 +118,15 @@ def _yscale(x, magnitude=.1, normal=False, by_channel=False):
     '''
     if magnitude <= 0: return x
     if normal:
-        scale = 1.+2*(np.random.randn(1 if not by_channel else x.shape[-2])-0.5)*magnitude
+        #magnitude: stdev
+        scale = 1.+(np.random.randn(1 if not by_channel else x.shape[-2]))*magnitude
     else:
+        #uniformly from [1-magnitude, 1+magnitude]
 #         scale = 1 + torch.rand(1) * magnitude  # uniform [0:1], normal possible
-        scale = 1.+2*(np.random.rand(1 if not by_channel else x.shape[-2])-0.5)*magnitude
+        scale = 1.-magnitude+2*(np.random.rand(1 if not by_channel else x.shape[-2]))*magnitude
 #         if np.random.rand() < .5: scale = 1 / scale # scale down
 #     output = x * scale.to(x.device)
+    print(scale)
     return x*scale if not by_channel else x*scale[..., None]
     # return x*scale.to(x.device) if not by_channel else x*scale[..., None].to(x.device)
 
@@ -170,7 +173,7 @@ def yscale_uniform(x: np.ndarray, magnitude: float = .1):
     returns:
         transformed np.ndarray of dimension (n_channels, seq_len)
     """
-    return _yscale(x, magnitude=magnitude, normal=True, by_channel=False)
+    return _yscale(x, magnitude=magnitude, normal=False, by_channel=False)
 
 def yscale_uniform_channel(x: np.ndarray, magnitude: float = .1):
     """
@@ -184,7 +187,7 @@ def yscale_uniform_channel(x: np.ndarray, magnitude: float = .1):
     returns:
         transformed np.ndarray of dimension (n_channels, seq_len)
     """
-    return _yscale(x, magnitude=magnitude, normal=True, by_channel=False)
+    return _yscale(x, magnitude=magnitude, normal=False, by_channel=True)
 
 ### time noise
 
@@ -279,21 +282,25 @@ def timenormal(x, magnitude=.1):
 
 #### zoom
 
-def _randomize(p):
+def _randomize(p, mode='max'):
+    '''
+    how: 'max'|'min'
+    '''
     # print(f'beta p {p}')
     p = np.random.beta(p,p)
-    return np.maximum(p, 1-p)
+    return np.maximum(p, 1-p) if mode=='max' else np.minimum(p, 1-p)
 
-def _rand_steps(n, p, rand=False, window=False):
-    if rand: p = _randomize(p)
+def _rand_steps(n, p, rand=False, window=False, mode='max'):
+    if rand: p = _randomize(p, mode=mode)
     n_steps = int(p*n)
     if window:
         start = np.random.randint(0, n-n_steps+1)
         return np.arange(start, start+n_steps)
     else: return np.sort(np.random.choice(n, n_steps, replace=False))
 
-def _zoom(x, magnitude=.2, rand=False, zoomout=False, window=True, verbose=False):
+def _zoom(x, magnitude=.2, rand=False, anchor=None, window=True, verbose=False):
     '''This is a slow batch tfm
+    anchor: None|'left'|'right' 
     win_len: zoom into original ts into a section consisting of win_len original data points
     randomly choose one of the seq_len-win_len possible starting points for that section
     within that section, consider seq_len(number of original datapoints) evenly distributed new datapoints
@@ -307,7 +314,10 @@ def _zoom(x, magnitude=.2, rand=False, zoomout=False, window=True, verbose=False
     assert len(x.shape)==2 or len(x.shape)==3, 'tensor needs to be 2D or 3D'
 
     window=_rand_steps(seq_len, 1-magnitude, rand=rand, window=window)
-    if zoomout: window=np.arange(seq_len-len(window), seq_len)
+    print(window)
+    if anchor=='right': window=np.arange(seq_len-len(window), seq_len) #right anchor
+    if anchor=='left': window=np.arange(0, len(window)) #left anchor
+    print(anchor,window)
     # pv(window, verbose)
 #     x2 = x[..., window]
     fs = [CubicSpline(np.arange(len(window)), x[...,i, window], axis=-1) for i in range(n_channels)]
@@ -330,17 +340,26 @@ def zoom_in(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
         x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: number of steps equal to (1-magnitude)*(seq_len)
     '''
-    return partial(_zoom, rand=True, zoomout=False, window=True)(x, magnitude=magnitude)
+    return partial(_zoom, rand=True, anchor=None, window=True)(x, magnitude=magnitude)
 
 
-def zoom_out(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
+def zoom_right(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
     '''
     zoom_out augementation
     args:
         x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: number of steps equal to (1+magnitude)*(seq_len)
     '''
-    return partial(_zoom, rand=True, zoomout=True, window=True)(x, magnitude=magnitude)
+    return partial(_zoom, rand=True, anchor='right', window=True)(x, magnitude=magnitude)
+
+def zoom_left(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
+    '''
+    zoom_out augementation
+    args:
+        x: np.ndarray of dimension (n_channels, seq_len)
+        magnitude: number of steps equal to (1+magnitude)*(seq_len)
+    '''
+    return partial(_zoom, rand=True, anchor='left', window=True)(x, magnitude=magnitude)
 
 def rand_zoom(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
     '''
@@ -350,8 +369,10 @@ def rand_zoom(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
         magnitude: number of steps equal to (1+magnitude)*(seq_len)
     '''
     p = np.random.rand()
-    zoomout = p<=.5
-    return partial(_zoom, rand=True, zoomout=zoomout, window=True)(x, magnitude=magnitude)
+    if p<=.333: anchor=None
+    else:
+        anchor='left' if  p<=.5 else 'right'
+    return partial(_zoom, rand=True, anchor=anchor, window=True)(x, magnitude=magnitude)
 
 def rand_timesteps(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
     '''
@@ -360,9 +381,11 @@ def rand_timesteps(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
         x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: number of steps equal to (1+magnitude)*(seq_len)
     '''
-    p = np.random.rand()
-    zoomout = p<=.5
-    return partial(_zoom, rand=True, zoomout=zoomout, window=False)(x, magnitude=magnitude)
+    # p = np.random.rand()
+    # if p<=.333: anchor=None
+    # else:
+    #     anchor='left' if  p<=.5 else 'right'
+    return partial(_zoom, rand=True, anchor=None, window=False)(x, magnitude=magnitude)
 
 _zoomin = partial(_zoom, rand=True)
 _zoomout = partial(_zoom, rand=True, zoomout=True)
@@ -401,9 +424,12 @@ def _create_mask_from_steps(x, steps, dim=False):
     return mask
 
 # Cell
-def _erase(x, magnitude=.2, rand=False, window=False, mean=False, complement=False, center=False, mask=False,
-          dim=False, verbose=False):
-    '''erasing parts of the timeseries'''
+def _erase(x, magnitude=.2, rand=False, window=False, mean=False, complement=False, anchor=None, mask=False,
+          dim=False, verbose=False, mode='max'):
+    '''
+    erasing parts of the timeseries
+    anchor: None|'left'|'center'
+    '''
     if magnitude==0: return x
     # pv(f'_erase input shape {x.shape}', verbose)
     assert len(x.shape)==2 or len(x.shape)==3, 'tensor needs to be 2D or 3D'
@@ -413,9 +439,12 @@ def _erase(x, magnitude=.2, rand=False, window=False, mean=False, complement=Fal
     p = 1-magnitude if complement else magnitude
 
     n = n_channels if dim else seq_len
-    steps = _rand_steps(n, p, rand=rand, window=window)
-    if center: steps = _center_steps(n, steps)
+    steps = _rand_steps(n, p, rand=rand, window=window, mode=mode)
+    if anchor=='left': steps = np.arange(len(steps))
+    if anchor=='center': steps = _center_steps(n, steps)
+    # print(steps)
     if complement: steps = _complement_steps(np.arange(n), steps, verbose=verbose)
+    # print(steps)
 
     # pv(f'steps {steps}', verbose)
     # output = x.clone()
@@ -423,6 +452,9 @@ def _erase(x, magnitude=.2, rand=False, window=False, mean=False, complement=Fal
     if not is_batch: output=np.expand_dims(output, 0)
     value = 0 if not mean else output.mean((0,2), keepdims=True)
     mask = np.random.rand(*output[0].shape)<magnitude if mask else _create_mask_from_steps(output[0], steps, dim=dim)
+    # cutout=False
+    # if cutout: mask = ~mask
+
 
     # pv(mask, verbose)
     # pv(value, verbose)
@@ -432,7 +464,9 @@ def _erase(x, magnitude=.2, rand=False, window=False, mean=False, complement=Fal
         assert mask.shape[-2] == value.shape[-2]
         output[..., mask]=0
         output=output+np.expand_dims(mask.astype('int').astype(x.dtype), 0)*value
-    return output.squeeze_(0) if not is_batch else output
+    # return output.squeeze_(0) if not is_batch else output
+    return output
+    # return np.expand_dims(output,0) if not is_batch else output
 
 def timestep_zero(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
     '''
@@ -441,7 +475,7 @@ def timestep_zero(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
         x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: time step erased with probability magnitude
     '''
-    return partial(_erase, rand=False, window=False, mean=False, complement=False, center=False, mask=False,
+    return partial(_erase, rand=False, window=False, mean=False, complement=False, anchor=None, mask=False,
             dim=False)(x, magnitude=magnitude)
 
 def timestep_mean(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
@@ -451,7 +485,7 @@ def timestep_mean(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
         x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: time step erased with probability magnitude
     '''
-    return partial(_erase, rand=False, window=False, mean=True, complement=False, center=False, mask=False,
+    return partial(_erase, rand=False, window=False, mean=True, complement=False, anchor=None, mask=False,
             dim=False)(x, magnitude=magnitude)
 
 def cutout(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
@@ -461,9 +495,19 @@ def cutout(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
         x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: time step erased with probability magnitude
     '''
-    return partial(_erase, rand=True, window=True, mean=False, complement=True, center=False, mask=False,
+    return partial(_erase, rand=False, window=True, mean=False, complement=False, anchor=None, mask=False,
             dim=False)(x, magnitude=magnitude)
     
+def cutout_rand(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
+    '''
+    cutout augmentation
+    args:
+        x: np.ndarray of dimension (n_channels, seq_len)
+        magnitude: time step erased with probability magnitude
+    '''
+    return partial(_erase, rand=True, window=True, mean=False, complement=False, anchor=None, mask=False,
+            dim=False, mode='min')(x, magnitude=magnitude)
+
 def crop(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
     '''
     cutout augmentation
@@ -471,7 +515,17 @@ def crop(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
         x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: time step erased with probability magnitude
     '''
-    return partial(_erase, rand=False, window=True, mean=False, complement=True, center=False, mask=False,
+    return partial(_erase, rand=False, window=True, mean=False, complement=True, anchor=None, mask=False,
+            dim=False)(x, magnitude=magnitude)
+
+def left_crop(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
+    '''
+    cutout augmentation
+    args:
+        x: np.ndarray of dimension (n_channels, seq_len)
+        magnitude: time step erased with probability magnitude
+    '''
+    return partial(_erase, rand=False, window=True, mean=False, complement=True, anchor='left', mask=False,
             dim=False)(x, magnitude=magnitude)
 
 def centercrop(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
@@ -481,7 +535,7 @@ def centercrop(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
         x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: time step erased with probability magnitude
     '''
-    return partial(_erase, rand=False, window=True, mean=False, complement=True, center=True, mask=False,
+    return partial(_erase, rand=False, window=True, mean=False, complement=True, anchor='center', mask=False,
             dim=False)(x, magnitude=magnitude)
     
 def maskout(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
@@ -491,7 +545,7 @@ def maskout(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
         x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: time step erased with probability magnitude
     '''
-    return partial(_erase, rand=False, window=False, mean=False, complement=False, center=True, mask=True,
+    return partial(_erase, rand=False, window=False, mean=False, complement=False, anchor='center', mask=True,
             dim=False)(x, magnitude=magnitude)
 
 def dimout(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
@@ -536,3 +590,30 @@ def integer_noise(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
     output = x+noise
     return output
 
+def quantize(x:np.ndarray, magnitude:float = .1, 
+        n_levels:int = 10,
+        how:str = 'quantile') -> np.ndarray:
+    '''
+    quantize x to levels
+    n_levels: number of levels
+    how: 'uniform': levels uniformly distributed over value range
+        'quantile': levels correspond to quantiles of the values
+    '''
+    pass
+
+
+def uniform_levels(x, n_levels=3):
+    x_min, x_max = x.min(), x.max()
+    # print(x_min, x_max)
+    step = 1.*(x_max-x_min)/(n_levels)
+    # print(step)
+    bins = [i*step+0.5*step for i in range(n_levels)]
+    return bins
+
+def quantile_levels(x, n_levels=3):
+    # x_min, x_max = x.min(), x.max()
+    # print(x_min, x_max)
+    step = 1/(n_levels)
+    # print(step)
+    bins = [np.quantile(x, i) for i in np.arange(0,10, 10/n_levels)]
+    return bins
