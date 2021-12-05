@@ -126,7 +126,7 @@ def _yscale(x, magnitude=.1, normal=False, by_channel=False):
         scale = 1.-magnitude+2*(np.random.rand(1 if not by_channel else x.shape[-2]))*magnitude
 #         if np.random.rand() < .5: scale = 1 / scale # scale down
 #     output = x * scale.to(x.device)
-    print(scale)
+    # print(scale)
     return x*scale if not by_channel else x*scale[..., None]
     # return x*scale.to(x.device) if not by_channel else x*scale[..., None].to(x.device)
 
@@ -314,10 +314,10 @@ def _zoom(x, magnitude=.2, rand=False, anchor=None, window=True, verbose=False):
     assert len(x.shape)==2 or len(x.shape)==3, 'tensor needs to be 2D or 3D'
 
     window=_rand_steps(seq_len, 1-magnitude, rand=rand, window=window)
-    print(window)
+    # print(window)
     if anchor=='right': window=np.arange(seq_len-len(window), seq_len) #right anchor
     if anchor=='left': window=np.arange(0, len(window)) #left anchor
-    print(anchor,window)
+    # print(anchor,window)
     # pv(window, verbose)
 #     x2 = x[..., window]
     fs = [CubicSpline(np.arange(len(window)), x[...,i, window], axis=-1) for i in range(n_channels)]
