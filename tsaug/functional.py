@@ -555,7 +555,7 @@ def dimout(x: np.ndarray, magnitude:float = .1) -> np.ndarray:
         x: np.ndarray of dimension (n_channels, seq_len)
         magnitude: time step erased with probability magnitude
     '''
-    return partial(_erase, rand=False, window=False, mean=False, complement=False, center=False, mask=False,
+    return partial(_erase, rand=False, window=False, mean=False, complement=False, anchor=None, mask=False,
             dim=True)(x, magnitude=magnitude)
 
 _timestepzero = partial(_erase)
@@ -563,7 +563,7 @@ _timestepmean = partial(_erase, mean=True)
 _cutout = partial(_erase, rand=True, window=True, complement=True)
 _crop = partial(_erase, window=True, complement=True)
 _randomcrop = partial(_erase, window=True, rand=True, complement=True)
-_centercrop = partial(_erase, window=True, rand=True, center=True,complement=True)
+_centercrop = partial(_erase, window=True, rand=True, anchor='center', complement=True)
 _maskout = partial(_erase, mask=True)
 _dimout = partial(_erase, dim=True)
 
